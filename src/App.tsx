@@ -8,7 +8,8 @@ import { DashboardLayout } from './components/layout/DashboardLayout';
 // Auth Pages
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
-
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 // Dashboard Pages
 import { EntrepreneurDashboard } from './pages/dashboard/EntrepreneurDashboard';
 import { InvestorDashboard } from './pages/dashboard/InvestorDashboard';
@@ -38,7 +39,9 @@ function App() {
           {/* Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
           {/* Dashboard Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route path="entrepreneur" element={<EntrepreneurDashboard />} />

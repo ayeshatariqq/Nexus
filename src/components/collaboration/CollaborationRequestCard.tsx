@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, X, MessageCircle } from 'lucide-react';
-import { CollaborationRequest } from '../../types';
+import { Check, X, MessageCircle, Calendar as CalendarIcon } from 'lucide-react';
+import { CollaborationRequest, Meeting } from '../../types';
 import { Card, CardBody, CardFooter } from '../ui/Card';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
@@ -9,43 +9,45 @@ import { Button } from '../ui/Button';
 import { findUserById } from '../../data/users';
 import { updateRequestStatus } from '../../data/collaborationRequests';
 import { formatDistanceToNow } from 'date-fns';
+import ScheduleMeetingModal from '../calendar/ScheduleMeetingModal';
 
 interface CollaborationRequestCardProps {
   request: CollaborationRequest;
   onStatusUpdate?: (requestId: string, status: 'accepted' | 'rejected') => void;
+  onScheduleMeeting?: (meeting: Meeting) => void;
 }
 
 export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> = ({
   request,
-  onStatusUpdate
+  onStatusUpdate,
+  onScheduleMeeting
 }) => {
   const navigate = useNavigate();
   const investor = findUserById(request.investorId);
-  
-  if (!investor) return null;
-  
+  const entrepreneur = findUserById(request.entrepreneurId);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  if (!investor || !entrepreneur) return null;
+
   const handleAccept = () => {
     updateRequestStatus(request.id, 'accepted');
-    if (onStatusUpdate) {
-      onStatusUpdate(request.id, 'accepted');
-    }
+    onStatusUpdate?.(request.id, 'accepted');
   };
-  
+
   const handleReject = () => {
     updateRequestStatus(request.id, 'rejected');
-    if (onStatusUpdate) {
-      onStatusUpdate(request.id, 'rejected');
-    }
+    onStatusUpdate?.(request.id, 'rejected');
   };
-  
+
   const handleMessage = () => {
+    // open DM with investor
     navigate(`/chat/${investor.id}`);
   };
-  
+
   const handleViewProfile = () => {
     navigate(`/profile/investor/${investor.id}`);
   };
-  
+
   const getStatusBadge = () => {
     switch (request.status) {
       case 'pending':
@@ -58,7 +60,7 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
         return null;
     }
   };
-  
+
   return (
     <Card className="transition-all duration-300">
       <CardBody className="flex flex-col">
@@ -71,7 +73,7 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
               status={investor.isOnline ? 'online' : 'offline'}
               className="mr-3"
             />
-            
+
             <div>
               <h3 className="text-md font-semibold text-gray-900">{investor.name}</h3>
               <p className="text-sm text-gray-500">
@@ -79,15 +81,15 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
               </p>
             </div>
           </div>
-          
+
           {getStatusBadge()}
         </div>
-        
+
         <div className="mt-4">
           <p className="text-sm text-gray-600">{request.message}</p>
         </div>
       </CardBody>
-      
+
       <CardFooter className="border-t border-gray-100 bg-gray-50">
         {request.status === 'pending' ? (
           <div className="flex justify-between w-full">
@@ -109,7 +111,7 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
                 Accept
               </Button>
             </div>
-            
+
             <Button
               variant="primary"
               size="sm"
@@ -117,6 +119,25 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
               onClick={handleMessage}
             >
               Message
+            </Button>
+          </div>
+        ) : request.status === 'accepted' ? (
+          <div className="flex justify-between w-full">
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<CalendarIcon size={16} />}
+              onClick={() => setIsModalOpen(true)}
+            >
+              Schedule Meeting
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleViewProfile}
+            >
+              View Profile
             </Button>
           </div>
         ) : (
@@ -129,7 +150,7 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
             >
               Message
             </Button>
-            
+
             <Button
               variant="primary"
               size="sm"
@@ -140,6 +161,31 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
           </div>
         )}
       </CardFooter>
+
+      {/* Meeting Modal */}
+      {isModalOpen && onScheduleMeeting && (
+        <ScheduleMeetingModal
+          entrepreneur={{
+            id: request.id,
+            entrepreneurId: request.entrepreneurId,
+            entrepreneurName: entrepreneur.name,
+          }}
+          onClose={() => setIsModalOpen(false)}
+          onSchedule={(meetingFromModal) => {
+            const meeting: Meeting = {
+              id: meetingFromModal.id,
+              title: meetingFromModal.title,
+              start: meetingFromModal.start,
+              status: 'pending',
+              entrepreneurId: request.entrepreneurId,
+              investorId: request.investorId,
+              createdById: investor.id,
+            };
+            onScheduleMeeting(meeting);
+            setIsModalOpen(false);
+          }}
+        />
+      )}
     </Card>
   );
 };
