@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Send, Phone, Video, Info, Smile } from 'lucide-react';
+import { Send, Phone, Video, Info, Smile, MessageCircle } from 'lucide-react';
 import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -10,7 +10,8 @@ import { useAuth } from '../../context/AuthContext';
 import { Message } from '../../types';
 import { findUserById } from '../../data/users';
 import { getMessagesBetweenUsers, sendMessage, getConversationsForUser } from '../../data/messages';
-import { MessageCircle } from 'lucide-react';
+import Modal from '../../components/ui/Modal';
+import VideoCall from '../../components/videoCall/VideoCall';
 
 export const ChatPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -18,32 +19,29 @@ export const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [conversations, setConversations] = useState<any[]>([]);
+  const [showVideoCall, setShowVideoCall] = useState(false); // NEW state
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   
   const chatPartner = userId ? findUserById(userId) : null;
   
   useEffect(() => {
-    // Load conversations
     if (currentUser) {
       setConversations(getConversationsForUser(currentUser.id));
     }
   }, [currentUser]);
   
   useEffect(() => {
-    // Load messages between users
     if (currentUser && userId) {
       setMessages(getMessagesBetweenUsers(currentUser.id, userId));
     }
   }, [currentUser, userId]);
   
   useEffect(() => {
-    // Scroll to bottom of messages
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!newMessage.trim() || !currentUser || !userId) return;
     
     const message = sendMessage({
@@ -54,8 +52,6 @@ export const ChatPage: React.FC = () => {
     
     setMessages([...messages, message]);
     setNewMessage('');
-    
-    // Update conversations
     setConversations(getConversationsForUser(currentUser.id));
   };
   
@@ -70,9 +66,9 @@ export const ChatPage: React.FC = () => {
       
       {/* Main chat area */}
       <div className="flex-1 flex flex-col">
-        {/* Chat header */}
         {chatPartner ? (
           <>
+            {/* Chat header */}
             <div className="border-b border-gray-200 p-4 flex justify-between items-center">
               <div className="flex items-center">
                 <Avatar
@@ -82,7 +78,6 @@ export const ChatPage: React.FC = () => {
                   status={chatPartner.isOnline ? 'online' : 'offline'}
                   className="mr-3"
                 />
-                
                 <div>
                   <h2 className="text-lg font-medium text-gray-900">{chatPartner.name}</h2>
                   <p className="text-sm text-gray-500">
@@ -92,30 +87,22 @@ export const ChatPage: React.FC = () => {
               </div>
               
               <div className="flex space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full p-2"
-                  aria-label="Voice call"
-                >
+                <Button variant="ghost" size="sm" className="rounded-full p-2" aria-label="Voice call">
                   <Phone size={18} />
                 </Button>
                 
+                {/* Toggle video call when clicking this */}
                 <Button
                   variant="ghost"
                   size="sm"
                   className="rounded-full p-2"
                   aria-label="Video call"
+                  onClick={() => setShowVideoCall(!showVideoCall)}
                 >
                   <Video size={18} />
                 </Button>
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full p-2"
-                  aria-label="Info"
-                >
+                <Button variant="ghost" size="sm" className="rounded-full p-2" aria-label="Info">
                   <Info size={18} />
                 </Button>
               </div>
@@ -144,17 +131,18 @@ export const ChatPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Video Call section (conditionally visible) */}
+            {showVideoCall && (
+            <Modal isOpen={showVideoCall} onClose={() => setShowVideoCall(false)}>
+              <VideoCall />
+            </Modal>
+            )}
             
             {/* Message input */}
             <div className="border-t border-gray-200 p-4">
               <form onSubmit={handleSendMessage} className="flex space-x-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full p-2"
-                  aria-label="Add emoji"
-                >
+                <Button type="button" variant="ghost" size="sm" className="rounded-full p-2" aria-label="Add emoji">
                   <Smile size={20} />
                 </Button>
                 
