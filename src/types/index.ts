@@ -93,3 +93,28 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+// ---- Payments / Wallet ----
+export type Currency = 'USD' | 'PKR';
+
+export type TransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
+export type TransactionType = 'DEPOSIT' | 'WITHDRAW' | 'TRANSFER' | 'FUNDING';
+
+export interface Transaction {
+  id: string;
+  type: TransactionType;
+  amount: number;          
+  currency: Currency;
+  senderId?: string;       
+  receiverId?: string;     
+  note?: string;           
+  status: TransactionStatus;
+  createdAt: string;       
+}
+
+export interface Wallet {
+  userId: string;
+  balance: number;
+  currency: Currency;
+}
+

@@ -2,6 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
+// Payment Pages
+import { WalletProvider } from './context/WalletContext';
+import PaymentsPage from './pages/payments/PaymentsPage';
+
 // Layouts
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
@@ -34,6 +38,7 @@ import { ChatPage } from './pages/chat/ChatPage';
 function App() {
   return (
     <AuthProvider>
+       <WalletProvider>
       <Router>
         <Routes>
           {/* Authentication Routes */}
@@ -41,6 +46,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+
 
           {/* Dashboard Routes */}
           <Route path="/dashboard" element={<DashboardLayout />}>
@@ -55,6 +61,10 @@ function App() {
           </Route>
           
           {/* Feature Routes */}
+          <Route path="/payments" element={<DashboardLayout />}>
+            <Route index element={<PaymentsPage />} />
+          </Route> 
+
           <Route path="/investors" element={<DashboardLayout />}>
             <Route index element={<InvestorsPage />} />
           </Route>
@@ -100,6 +110,7 @@ function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
+      </WalletProvider>
     </AuthProvider>
   );
 }

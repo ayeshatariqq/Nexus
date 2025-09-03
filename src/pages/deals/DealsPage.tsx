@@ -5,6 +5,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
+import FundDealButton from '../../components/payment/FundDealButton';
 
 const deals = [
   {
@@ -256,9 +257,7 @@ export const DealsPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
+                      <FundDealButton entrepreneurId={deal.id} dealTitle={deal.startup.name} />
                     </td>
                   </tr>
                 ))}

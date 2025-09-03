@@ -12,6 +12,7 @@ import { entrepreneurs } from '../../data/users';
 import { getRequestsFromInvestor } from '../../data/collaborationRequests';
 import MeetingCalendar from '../../components/calendar/MeetingCalendar';
 import { CollaborationRequestCard } from '../../components/collaboration/CollaborationRequestCard';
+import WalletBalance from '../../components/payment/WalletBalance';
 
 export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -115,7 +116,7 @@ export const InvestorDashboard: React.FC = () => {
       </div>
 
       {/* Stats summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-primary-50 border border-primary-100">
           <CardBody>
             <div className="flex items-center">
@@ -159,6 +160,9 @@ export const InvestorDashboard: React.FC = () => {
             </div>
           </CardBody>
         </Card>
+
+
+        <WalletBalance />
       </div>
 
       {/* Meeting Calendar */}
