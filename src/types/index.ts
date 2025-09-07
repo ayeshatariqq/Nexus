@@ -23,6 +23,7 @@ export interface User {
   bio: string;
   isOnline?: boolean;
   createdAt: string;
+  twoFactorEnabled?: boolean;
 }
 
 export interface Entrepreneur extends User {
@@ -92,6 +93,9 @@ export interface AuthContextType {
   updateProfile: (userId: string, updates: Partial<User>) => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
+  pending2FA?: boolean;
+  verifyOtp?: (code: string) => Promise<void>;
+  resendOtp?: () => void;
 }
 
 // ---- Payments / Wallet ----

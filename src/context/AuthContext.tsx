@@ -3,66 +3,147 @@ import { User, UserRole, AuthContextType } from '../types';
 import { users } from '../data/users';
 import toast from 'react-hot-toast';
 
-// Create Auth Context
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Local storage keys
 const USER_STORAGE_KEY = 'business_nexus_user';
 const RESET_TOKEN_KEY = 'business_nexus_reset_token';
 
-// Auth Provider Component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // 2FA / OTP state (mock)
+  const [pending2FA, setPending2FA] = useState(false);
+  const [otp, setOtp] = useState<string | null>(null);
 
   // Check for stored user on initial load
   useEffect(() => {
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        // ignore parse errors
+      }
     }
     setIsLoading(false);
   }, []);
 
-  // Mock login function - in a real app, this would make an API call
+  /**
+   * login:
+   * - keeps original signature (email, password, role)
+   * - if the found user has twoFactorEnabled (truthy), start 2FA step:
+   *    set pending2FA = true, set user in memory (not persisted) and generate OTP
+   * - if twoFactorEnabled is false -> complete login and persist to localStorage
+   */
   const login = async (email: string, password: string, role: UserRole): Promise<void> => {
     setIsLoading(true);
-    
+
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Find user with matching email and role
       const foundUser = users.find(u => u.email === email && u.role === role);
-      
-      if (foundUser) {
-        setUser(foundUser);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(foundUser));
-        toast.success('Successfully logged in!');
-      } else {
+
+      if (!foundUser) {
         throw new Error('Invalid credentials or user not found');
       }
+
+      // NOTE: In a real app you'd verify the password. This is a mock.
+
+      // Decide 2FA behavior: if user.twoFactorEnabled === false -> no 2FA
+      // otherwise default to enabling 2FA for demo (if undefined => true)
+      const twoFactorEnabled = foundUser.twoFactorEnabled !== false;
+
+      if (twoFactorEnabled) {
+        // start 2FA flow: set user in memory (not persisted) and mark pending
+        setUser(foundUser);
+        setPending2FA(true);
+
+        // generate mock OTP (6-digit)
+        const code = (Math.floor(100000 + Math.random() * 900000)).toString();
+        setOtp(code);
+
+        // For demo: show OTP in console (you can show toast in dev only)
+        // eslint-disable-next-line no-console
+        console.info('[2FA OTP]', code);
+
+        toast.success('2FA code sent (mock) — check console in dev');
+        return;
+      }
+
+      // No 2FA: persist user and complete login
+      setUser(foundUser);
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(foundUser));
+      toast.success('Successfully logged in!');
     } catch (error) {
-      toast.error((error as Error).message);
+      const msg = (error as Error).message || 'Login failed';
+      toast.error(msg);
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Mock register function - in a real app, this would make an API call
+  // verify OTP for 2FA
+  const verifyOtp = async (code: string): Promise<void> => {
+    setIsLoading(true);
+    try {
+      // small delay to mimic network
+      await new Promise((r) => setTimeout(r, 700));
+
+      if (!otp) {
+        throw new Error('No OTP generated');
+      }
+      if (code !== otp) {
+        throw new Error('Invalid verification code');
+      }
+
+      // OTP matched: complete login (persist user if available)
+      setPending2FA(false);
+      setOtp(null);
+
+      if (user) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+        toast.success('Two-factor authentication successful');
+      } else {
+        // this should not happen, but handle gracefully
+        toast.success('Verified');
+      }
+    } catch (error) {
+      const msg = (error as Error).message || 'OTP verification failed';
+      toast.error(msg);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // resend OTP (mock)
+  const resendOtp = () => {
+    const code = (Math.floor(100000 + Math.random() * 900000)).toString();
+    setOtp(code);
+    // eslint-disable-next-line no-console
+    console.info('[2FA OTP resent]', code);
+    toast.success('OTP resent (mock) — check console in dev');
+  };
+
+  // Mock register function - unchanged except we keep 2FA flag optional
   const register = async (name: string, email: string, password: string, role: UserRole): Promise<void> => {
     setIsLoading(true);
-    
+
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Check if email already exists
       if (users.some(u => u.email === email)) {
         throw new Error('Email already in use');
       }
-      
+
       // Create new user
       const newUser: User = {
         id: `${role[0]}${users.length + 1}`,
@@ -72,12 +153,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
         bio: '',
         isOnline: true,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        // default twoFactorEnabled to true for demo; you can set to false if you don't want 2FA for new users
+        twoFactorEnabled: true,
       };
-      
+
       // Add user to mock data
       users.push(newUser);
-      
+
       setUser(newUser);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
       toast.success('Account created successfully!');
@@ -94,19 +177,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Check if user exists
-      const user = users.find(u => u.email === email);
-      if (!user) {
+      const userFound = users.find(u => u.email === email);
+      if (!userFound) {
         throw new Error('No account found with this email');
       }
-      
+
       // Generate reset token (in a real app, this would be a secure token)
       const resetToken = Math.random().toString(36).substring(2, 15);
       localStorage.setItem(RESET_TOKEN_KEY, resetToken);
-      
+
       // In a real app, this would send an email
-      toast.success('Password reset instructions sent to your email');
+      toast.success('Password reset instructions sent to your email (mock)');
     } catch (error) {
       toast.error((error as Error).message);
       throw error;
@@ -118,16 +201,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Verify token
       const storedToken = localStorage.getItem(RESET_TOKEN_KEY);
       if (token !== storedToken) {
         throw new Error('Invalid or expired reset token');
       }
-      
+
       // In a real app, this would update the user's password in the database
       localStorage.removeItem(RESET_TOKEN_KEY);
-      toast.success('Password reset successfully');
+      toast.success('Password reset successfully (mock)');
     } catch (error) {
       toast.error((error as Error).message);
       throw error;
@@ -137,6 +220,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Logout function
   const logout = (): void => {
     setUser(null);
+    setPending2FA(false);
+    setOtp(null);
     localStorage.removeItem(USER_STORAGE_KEY);
     toast.success('Logged out successfully');
   };
@@ -146,22 +231,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Update user in mock data
       const userIndex = users.findIndex(u => u.id === userId);
       if (userIndex === -1) {
         throw new Error('User not found');
       }
-      
+
       const updatedUser = { ...users[userIndex], ...updates };
       users[userIndex] = updatedUser;
-      
+
       // Update current user if it's the same user
       if (user?.id === userId) {
         setUser(updatedUser);
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
       }
-      
+
       toast.success('Profile updated successfully');
     } catch (error) {
       toast.error((error as Error).message);
@@ -169,7 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     login,
     register,
@@ -177,8 +262,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     forgotPassword,
     resetPassword,
     updateProfile,
-    isAuthenticated: !!user,
-    isLoading
+    isAuthenticated: !!user && !pending2FA,
+    isLoading,
+    pending2FA,
+    verifyOtp,
+    resendOtp,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
