@@ -28,7 +28,7 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({
   const [events, setEvents] = useState<Meeting[]>(() => {
     if (initialEvents) return initialEvents;
     const stored = localStorage.getItem(LS_KEY);
-    return stored ? JSON.parse(stored) : [];
+    return stored ? (JSON.parse(stored) as Meeting[]) : [];
   });
 
   // keep internal state in sync if parent passes a fresh initialEvents
@@ -51,8 +51,9 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({
       const newEvent: Meeting = {
         id: String(Date.now()),
         title,
-        start: selectInfo.start,
-        end: selectInfo.end,
+        // use ISO strings for consistency
+        start: selectInfo.startStr,
+        end: selectInfo.endStr ?? undefined,
         allDay: selectInfo.allDay,
         status: "pending",
       };
@@ -62,41 +63,34 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     const eventId = clickInfo.event.id;
-    const event = events.find((e) => e.id === eventId);
-    if (!event) return;
+    const current = events.find((e) => e.id === eventId);
+    if (!current) return;
 
-    if (event.status === "pending") {
+    if (current.status === "pending") {
       const action = window.prompt(
-        `Meeting: ${event.title}\nChoose: accept / decline / delete`
+        `Meeting: ${current.title}\nType one: accept / decline / delete`
       );
-
       if (!action) return;
       const val = action.toLowerCase().trim();
 
       if (val === "accept") {
         setEvents((prev) =>
-          prev.map((e) =>
-            e.id === eventId ? { ...e, status: "accepted" } : e
-          )
+          prev.map((e) => (e.id === eventId ? { ...e, status: "accepted" } : e))
         );
       } else if (val === "decline") {
         setEvents((prev) =>
-          prev.map((e) =>
-            e.id === eventId ? { ...e, status: "declined" } : e
-          )
+          prev.map((e) => (e.id === eventId ? { ...e, status: "declined" } : e))
         );
       } else if (val === "delete") {
         setEvents((prev) => prev.filter((e) => e.id !== eventId));
       }
     } else {
-      const ok = window.confirm(`Delete '${event.title}'?`);
-      if (ok) {
-        setEvents((prev) => prev.filter((e) => e.id !== eventId));
-      }
+      const ok = window.confirm(`Delete '${current.title}'?`);
+      if (ok) setEvents((prev) => prev.filter((e) => e.id !== eventId));
     }
   };
 
-  // Support drag/resize to modify a slot
+  // drag/resize to modify a slot — store back as ISO strings
   const handleEventChange = (changeInfo: EventChangeArg) => {
     const { event } = changeInfo;
     setEvents((prev) =>
@@ -104,8 +98,8 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({
         e.id === event.id
           ? {
               ...e,
-              start: event.start ?? e.start,
-              end: event.end ?? e.end,
+              start: event.startStr || e.start,
+              end: event.endStr || e.end,
               allDay: event.allDay ?? e.allDay,
             }
           : e
@@ -117,6 +111,7 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({
     () =>
       events.map((e) => ({
         ...e,
+        // color-coding by status
         color:
           e.status === "pending"
             ? "orange"

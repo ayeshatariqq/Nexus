@@ -1,6 +1,6 @@
 import { Meeting } from "../types";
 
-// Prefer localStorage so calendar + dashboards stay in sync across components/tabs
+// single source of truth for localStorage key
 const LS_KEY = "events";
 
 function readAll(): Meeting[] {
@@ -13,8 +13,22 @@ function writeAll(list: Meeting[]) {
 }
 
 export function addMeeting(meeting: Meeting) {
+  // ensure ISO strings for dates
+  const normalized: Meeting = {
+    ...meeting,
+    start:
+      typeof meeting.start === "string"
+        ? meeting.start
+        : new Date(meeting.start).toISOString(),
+    end:
+      !meeting.end
+        ? undefined
+        : typeof meeting.end === "string"
+        ? meeting.end
+        : new Date(meeting.end).toISOString(),
+  };
   const list = readAll();
-  list.push(meeting);
+  list.push(normalized);
   writeAll(list);
 }
 
@@ -23,18 +37,20 @@ export function getAllMeetings(): Meeting[] {
 }
 
 export function getMeetingsForEntrepreneur(entrepreneurId: string) {
-  return readAll().filter(m => m.entrepreneurId === entrepreneurId);
+  return readAll().filter((m) => m.entrepreneurId === entrepreneurId);
 }
 
 export function getMeetingsForInvestor(investorId: string) {
-  return readAll().filter(m => m.investorId === investorId);
+  return readAll().filter((m) => m.investorId === investorId);
 }
 
 export function updateMeeting(id: string, patch: Partial<Meeting>) {
-  const list = readAll().map(m => (m.id === id ? { ...m, ...patch } : m));
+  const list = readAll().map((m) =>
+    m.id === id ? { ...m, ...patch } : m
+  );
   writeAll(list);
 }
 
 export function deleteMeeting(id: string) {
-  writeAll(readAll().filter(m => m.id !== id));
+  writeAll(readAll().filter((m) => m.id !== id));
 }

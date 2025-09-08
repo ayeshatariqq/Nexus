@@ -1,17 +1,19 @@
 export type UserRole = 'entrepreneur' | 'investor';
+export type MeetingStatus = 'pending' | 'accepted' | 'declined';
 
 export interface Meeting {
   id: string;
   title: string;
-  start: string | Date;
-  end?: string | Date;
+  start: string;
+  end?: string | null;
   allDay?: boolean;
-  status: 'pending' | 'accepted' | 'declined';
+  status: MeetingStatus;
   // links to participants
   entrepreneurId?: string;
   investorId?: string;
   createdById?: string;
   notes?: string;
+  
 }
 
 export interface User {

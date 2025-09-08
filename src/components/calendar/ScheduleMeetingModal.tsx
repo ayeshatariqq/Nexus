@@ -3,7 +3,7 @@ import { Button } from "../../components/ui/Button";
 
 interface ScheduleMeetingModalProps {
   entrepreneur: {
-    id: string; // request id (for context)
+    id: string; // request id
     entrepreneurId: string;
     entrepreneurName: string;
   };
@@ -11,7 +11,8 @@ interface ScheduleMeetingModalProps {
   onSchedule: (meeting: {
     id: string;
     title: string;
-    start: Date;
+    /** ISO string */
+    start: string;
     entrepreneurId: string;
     entrepreneurName: string;
   }) => void;
@@ -32,7 +33,7 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
     const meeting = {
       id: Date.now().toString(),
       title: `Meeting with ${entrepreneur.entrepreneurName}`,
-      start,
+      start: start.toISOString(), // ISO!
       entrepreneurId: entrepreneur.entrepreneurId,
       entrepreneurName: entrepreneur.entrepreneurName,
     };

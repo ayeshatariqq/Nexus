@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, PieChart, Filter, Search, PlusCircle } from 'lucide-react';
+import { Users, PieChart, Filter, Search, PlusCircle, Check, X, Trash } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -11,15 +11,16 @@ import { Meeting } from '../../types';
 import { entrepreneurs } from '../../data/users';
 import { getRequestsFromInvestor } from '../../data/collaborationRequests';
 import MeetingCalendar from '../../components/calendar/MeetingCalendar';
-import { CollaborationRequestCard } from '../../components/collaboration/CollaborationRequestCard';
+// NOTE: match your folder name: 'payments'
 import WalletBalance from '../../components/payment/WalletBalance';
+import { CollaborationRequestCard } from '../../components/collaboration/CollaborationRequestCard';
 
 export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [events, setEvents] = useState<Meeting[]>(() => {
     const stored = localStorage.getItem('events');
-    return stored ? JSON.parse(stored) : [];
+    return stored ? (JSON.parse(stored) as Meeting[]) : [];
   });
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
 
@@ -29,17 +30,16 @@ export const InvestorDashboard: React.FC = () => {
 
   if (!user) return null;
 
-  // Get collaboration requests sent by this investor
   const sentRequests = getRequestsFromInvestor(user.id);
 
-  // Filter entrepreneurs based on search and industry filters
   const filteredEntrepreneurs = entrepreneurs.filter(entrepreneur => {
+    const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      searchQuery === '' ||
-      entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.startupName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.pitchSummary.toLowerCase().includes(searchQuery.toLowerCase());
+      q === '' ||
+      entrepreneur.name.toLowerCase().includes(q) ||
+      entrepreneur.startupName.toLowerCase().includes(q) ||
+      entrepreneur.industry.toLowerCase().includes(q) ||
+      entrepreneur.pitchSummary.toLowerCase().includes(q);
 
     const matchesIndustry =
       selectedIndustries.length === 0 ||
@@ -48,26 +48,29 @@ export const InvestorDashboard: React.FC = () => {
     return matchesSearch && matchesIndustry;
   });
 
-  // Get unique industries for filter
   const industries = Array.from(new Set(entrepreneurs.map(e => e.industry)));
 
-  // Toggle industry selection
   const toggleIndustry = (industry: string) => {
-    setSelectedIndustries(prevSelected =>
-      prevSelected.includes(industry)
-        ? prevSelected.filter(i => i !== industry)
-        : [...prevSelected, industry]
+    setSelectedIndustries(prev =>
+      prev.includes(industry) ? prev.filter(i => i !== industry) : [...prev, industry]
     );
   };
 
-  // Schedule meeting from accepted request (via modal)
+  // schedule meeting from accepted request (via modal)
   const handleScheduleMeeting = (meeting: Meeting) => {
     setEvents(prev => [...prev, meeting]);
   };
 
-  const upcomingMeetingsCount = events.filter(
-    (e) => new Date(e.start) > new Date()
-  ).length;
+  const now = new Date();
+  const pendingMeetings = events.filter(e => e.status === 'pending');
+  const acceptedUpcoming = events.filter(e => e.status === 'accepted' && new Date(e.start) > now);
+
+  const acceptMeeting = (id: string) =>
+    setEvents(prev => prev.map(e => (e.id === id ? { ...e, status: 'accepted' } : e)));
+  const declineMeeting = (id: string) =>
+    setEvents(prev => prev.map(e => (e.id === id ? { ...e, status: 'declined' } : e)));
+  const deleteMeeting = (id: string) =>
+    setEvents(prev => prev.filter(e => e.id !== id));
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -154,16 +157,45 @@ export const InvestorDashboard: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-accent-700">Upcoming Meetings</p>
                 <h3 className="text-xl font-semibold text-accent-900">
-                  {upcomingMeetingsCount}
+                  {acceptedUpcoming.length}
                 </h3>
               </div>
             </div>
           </CardBody>
         </Card>
 
-
         <WalletBalance />
       </div>
+
+      {/* Pending meetings quick actions */}
+      {pendingMeetings.length > 0 && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-medium text-gray-900">Pending Meeting Requests</h2>
+          </CardHeader>
+          <CardBody className="space-y-3">
+            {pendingMeetings.map(m => (
+              <div key={m.id} className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex flex-col">
+                  <span className="font-medium">{m.title}</span>
+                  <span className="text-sm text-gray-600">{new Date(m.start).toLocaleString()}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="success" leftIcon={<Check size={14} />} onClick={() => acceptMeeting(m.id)}>
+                    Accept
+                  </Button>
+                  <Button size="sm" variant="outline" leftIcon={<X size={14} />} onClick={() => declineMeeting(m.id)}>
+                    Decline
+                  </Button>
+                  <Button size="sm" variant="outline" leftIcon={<Trash size={14} />} onClick={() => deleteMeeting(m.id)}>
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+      )}
 
       {/* Meeting Calendar */}
       <Card className="bg-accent-50 border border-accent-100">
@@ -213,14 +245,11 @@ export const InvestorDashboard: React.FC = () => {
             <h2 className="text-lg font-medium text-gray-900">Featured Startups</h2>
           </CardHeader>
 
-        <CardBody>
+          <CardBody>
             {filteredEntrepreneurs.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredEntrepreneurs.map(entrepreneur => (
-                  <EntrepreneurCard
-                    key={entrepreneur.id}
-                    entrepreneur={entrepreneur}
-                  />
+                  <EntrepreneurCard key={entrepreneur.id} entrepreneur={entrepreneur} />
                 ))}
               </div>
             ) : (

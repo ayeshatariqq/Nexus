@@ -39,14 +39,8 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
     onStatusUpdate?.(request.id, 'rejected');
   };
 
-  const handleMessage = () => {
-    // open DM with investor
-    navigate(`/chat/${investor.id}`);
-  };
-
-  const handleViewProfile = () => {
-    navigate(`/profile/investor/${investor.id}`);
-  };
+  const handleMessage = () => navigate(`/chat/${investor.id}`);
+  const handleViewProfile = () => navigate(`/profile/investor/${investor.id}`);
 
   const getStatusBadge = () => {
     switch (request.status) {
@@ -73,7 +67,6 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
               status={investor.isOnline ? 'online' : 'offline'}
               className="mr-3"
             />
-
             <div>
               <h3 className="text-md font-semibold text-gray-900">{investor.name}</h3>
               <p className="text-sm text-gray-500">
@@ -81,7 +74,6 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
               </p>
             </div>
           </div>
-
           {getStatusBadge()}
         </div>
 
@@ -94,30 +86,14 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
         {request.status === 'pending' ? (
           <div className="flex justify-between w-full">
             <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<X size={16} />}
-                onClick={handleReject}
-              >
+              <Button variant="outline" size="sm" leftIcon={<X size={16} />} onClick={handleReject}>
                 Decline
               </Button>
-              <Button
-                variant="success"
-                size="sm"
-                leftIcon={<Check size={16} />}
-                onClick={handleAccept}
-              >
+              <Button variant="success" size="sm" leftIcon={<Check size={16} />} onClick={handleAccept}>
                 Accept
               </Button>
             </div>
-
-            <Button
-              variant="primary"
-              size="sm"
-              leftIcon={<MessageCircle size={16} />}
-              onClick={handleMessage}
-            >
+            <Button variant="primary" size="sm" leftIcon={<MessageCircle size={16} />} onClick={handleMessage}>
               Message
             </Button>
           </div>
@@ -132,37 +108,22 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
               Schedule Meeting
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleViewProfile}
-            >
+            <Button variant="outline" size="sm" onClick={handleViewProfile}>
               View Profile
             </Button>
           </div>
         ) : (
           <div className="flex justify-between w-full">
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<MessageCircle size={16} />}
-              onClick={handleMessage}
-            >
+            <Button variant="outline" size="sm" leftIcon={<MessageCircle size={16} />} onClick={handleMessage}>
               Message
             </Button>
-
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleViewProfile}
-            >
+            <Button variant="primary" size="sm" onClick={handleViewProfile}>
               View Profile
             </Button>
           </div>
         )}
       </CardFooter>
 
-      {/* Meeting Modal */}
       {isModalOpen && onScheduleMeeting && (
         <ScheduleMeetingModal
           entrepreneur={{
@@ -175,7 +136,7 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
             const meeting: Meeting = {
               id: meetingFromModal.id,
               title: meetingFromModal.title,
-              start: meetingFromModal.start,
+              start: meetingFromModal.start, // ISO
               status: 'pending',
               entrepreneurId: request.entrepreneurId,
               investorId: request.investorId,

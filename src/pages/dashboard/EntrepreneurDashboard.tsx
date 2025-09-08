@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Bell, Calendar as CalendarIcon, TrendingUp, AlertCircle, PlusCircle } from 'lucide-react';
+import { Users, Bell, Calendar as CalendarIcon, TrendingUp, AlertCircle, PlusCircle, Check, X, Trash } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -11,37 +11,33 @@ import { CollaborationRequest, Meeting } from '../../types';
 import { getRequestsForEntrepreneur } from '../../data/collaborationRequests';
 import { investors } from '../../data/users';
 import MeetingCalendar from '../../components/calendar/MeetingCalendar';
+// NOTE: match your folder name: 'payments'
 import WalletBalance from '../../components/payment/WalletBalance';
-
-
 
 export const EntrepreneurDashboard: React.FC = () => {
   const { user } = useAuth();
   const [collaborationRequests, setCollaborationRequests] = useState<CollaborationRequest[]>([]);
   const [recommendedInvestors] = useState(investors.slice(0, 3));
+
   const [events, setEvents] = useState<Meeting[]>(() => {
     const raw = localStorage.getItem('events');
-    return raw ? JSON.parse(raw) : [];
+    return raw ? (JSON.parse(raw) as Meeting[]) : [];
   });
 
+  // persist
   useEffect(() => {
     localStorage.setItem('events', JSON.stringify(events));
   }, [events]);
 
   useEffect(() => {
-    if (user) {
-      const requests = getRequestsForEntrepreneur(user.id);
-      setCollaborationRequests(requests);
-    }
+    if (user) setCollaborationRequests(getRequestsForEntrepreneur(user.id));
   }, [user]);
 
   if (!user) return null;
 
   const handleRequestStatusUpdate = (requestId: string, status: 'accepted' | 'rejected') => {
-    setCollaborationRequests(prevRequests =>
-      prevRequests.map(req =>
-        req.id === requestId ? { ...req, status } : req
-      )
+    setCollaborationRequests(prev =>
+      prev.map(req => (req.id === requestId ? { ...req, status } : req))
     );
   };
 
@@ -49,11 +45,19 @@ export const EntrepreneurDashboard: React.FC = () => {
     setEvents(prev => [...prev, meeting]);
   };
 
-  const upcomingAccepted = events.filter(
-    (e) => e.status === 'accepted' && new Date(e.start) > new Date()
-  ).length;
-
+  const now = new Date();
+  const pendingMeetings = events.filter(e => e.status === 'pending');
+  const acceptedUpcoming = events.filter(
+    e => e.status === 'accepted' && new Date(e.start) > now
+  );
   const pendingRequests = collaborationRequests.filter(req => req.status === 'pending');
+
+  const acceptMeeting = (id: string) =>
+    setEvents(prev => prev.map(e => (e.id === id ? { ...e, status: 'accepted' } : e)));
+  const declineMeeting = (id: string) =>
+    setEvents(prev => prev.map(e => (e.id === id ? { ...e, status: 'declined' } : e)));
+  const deleteMeeting = (id: string) =>
+    setEvents(prev => prev.filter(e => e.id !== id));
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -110,7 +114,7 @@ export const EntrepreneurDashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-accent-700">Upcoming Meetings</p>
-                <h3 className="text-xl font-semibold text-accent-900">{upcomingAccepted}</h3>
+                <h3 className="text-xl font-semibold text-accent-900">{acceptedUpcoming.length}</h3>
               </div>
             </div>
           </CardBody>
@@ -131,8 +135,37 @@ export const EntrepreneurDashboard: React.FC = () => {
         </Card>
 
         <WalletBalance />
-
       </div>
+
+      {/* Pending meetings quick actions */}
+      {pendingMeetings.length > 0 && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-medium text-gray-900">Pending Meeting Requests</h2>
+          </CardHeader>
+          <CardBody className="space-y-3">
+            {pendingMeetings.map(m => (
+              <div key={m.id} className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex flex-col">
+                  <span className="font-medium">{m.title}</span>
+                  <span className="text-sm text-gray-600">{new Date(m.start).toLocaleString()}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="success" leftIcon={<Check size={14} />} onClick={() => acceptMeeting(m.id)}>
+                    Accept
+                  </Button>
+                  <Button size="sm" variant="outline" leftIcon={<X size={14} />} onClick={() => declineMeeting(m.id)}>
+                    Decline
+                  </Button>
+                  <Button size="sm" variant="outline" leftIcon={<Trash size={14} />} onClick={() => deleteMeeting(m.id)}>
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+      )}
 
       {/* Meeting Calendar */}
       <Card className="bg-accent-50 border border-accent-100">
@@ -197,11 +230,7 @@ export const EntrepreneurDashboard: React.FC = () => {
 
             <CardBody className="space-y-4">
               {recommendedInvestors.map(investor => (
-                <InvestorCard
-                  key={investor.id}
-                  investor={investor}
-                  showActions={false}
-                />
+                <InvestorCard key={investor.id} investor={investor} showActions={false} />
               ))}
             </CardBody>
           </Card>
