@@ -18,7 +18,7 @@ export const RegisterPage: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  // --- Password Strength Logic ---
+  //Password Strength Logic
   const getPasswordStrength = (pwd: string) => {
     let strength = 0;
     if (pwd.length >= 8) strength++;

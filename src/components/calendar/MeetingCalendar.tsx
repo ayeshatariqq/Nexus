@@ -13,9 +13,7 @@ import {
 import { Meeting } from "../../types";
 
 type MeetingCalendarProps = {
-  /** Optional controlled list. If omitted, the component uses localStorage itself. */
   initialEvents?: Meeting[];
-  /** Called when events change (add/edit/delete/status). */
   onEventsChange?: (events: Meeting[]) => void;
 };
 
@@ -31,12 +29,10 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({
     return stored ? (JSON.parse(stored) as Meeting[]) : [];
   });
 
-  // keep internal state in sync if parent passes a fresh initialEvents
   useEffect(() => {
     if (initialEvents) setEvents(initialEvents);
   }, [initialEvents]);
 
-  // persist + lift state up
   useEffect(() => {
     localStorage.setItem(LS_KEY, JSON.stringify(events));
     onEventsChange?.(events);
@@ -51,7 +47,6 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({
       const newEvent: Meeting = {
         id: String(Date.now()),
         title,
-        // use ISO strings for consistency
         start: selectInfo.startStr,
         end: selectInfo.endStr ?? undefined,
         allDay: selectInfo.allDay,
@@ -90,7 +85,7 @@ const MeetingCalendar: React.FC<MeetingCalendarProps> = ({
     }
   };
 
-  // drag/resize to modify a slot — store back as ISO strings
+  
   const handleEventChange = (changeInfo: EventChangeArg) => {
     const { event } = changeInfo;
     setEvents((prev) =>

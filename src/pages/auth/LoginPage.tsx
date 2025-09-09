@@ -1,5 +1,3 @@
-// src/pages/auth/LoginPage.tsx
-
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, CircleDollarSign, Building2, LogIn, AlertCircle } from 'lucide-react';
@@ -180,7 +178,7 @@ export const LoginPage: React.FC = () => {
               </Button>
             </form>
           ) : (
-            // 2FA / OTP flow
+            // OTP flow
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-medium">Two-factor verification</h3>

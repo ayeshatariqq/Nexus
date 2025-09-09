@@ -3,7 +3,7 @@ import { Button } from "../../components/ui/Button";
 
 interface ScheduleMeetingModalProps {
   entrepreneur: {
-    id: string; // request id
+    id: string; 
     entrepreneurId: string;
     entrepreneurName: string;
   };
@@ -11,7 +11,6 @@ interface ScheduleMeetingModalProps {
   onSchedule: (meeting: {
     id: string;
     title: string;
-    /** ISO string */
     start: string;
     entrepreneurId: string;
     entrepreneurName: string;

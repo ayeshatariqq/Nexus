@@ -10,7 +10,7 @@ const VideoCall: React.FC = () => {
   const [isAudioOn, setIsAudioOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
 
-  // Start call (mock: just show local camera)
+  // Start call (mock: just showing local camera)
   const startCall = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -22,7 +22,6 @@ const VideoCall: React.FC = () => {
         localVideoRef.current.srcObject = stream;
       }
 
-      // Remote video mock (for now, just duplicate local)
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = stream;
       }
@@ -48,7 +47,7 @@ const VideoCall: React.FC = () => {
     setIsCallActive(false);
   };
 
-  // 🔹 Toggle video
+  // Toggle video
   const toggleVideo = () => {
     const stream = localVideoRef.current?.srcObject as MediaStream;
     if (stream) {

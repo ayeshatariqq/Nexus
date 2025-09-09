@@ -132,7 +132,7 @@ export const ChatPage: React.FC = () => {
               )}
             </div>
 
-            {/* Video Call section (conditionally visible) */}
+            {/* Video Call section */}
             {showVideoCall && (
             <Modal isOpen={showVideoCall} onClose={() => setShowVideoCall(false)}>
               <VideoCall />

@@ -11,7 +11,6 @@ const DocumentPreview: React.FC<Props> = ({ file }) => {
   }, [file]);
 
   useEffect(() => {
-    // Clean up when component unmounts or file changes
     return () => {
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);

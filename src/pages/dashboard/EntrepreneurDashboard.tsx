@@ -11,7 +11,6 @@ import { CollaborationRequest, Meeting } from '../../types';
 import { getRequestsForEntrepreneur } from '../../data/collaborationRequests';
 import { investors } from '../../data/users';
 import MeetingCalendar from '../../components/calendar/MeetingCalendar';
-// NOTE: match your folder name: 'payments'
 import WalletBalance from '../../components/payment/WalletBalance';
 
 export const EntrepreneurDashboard: React.FC = () => {
@@ -24,7 +23,7 @@ export const EntrepreneurDashboard: React.FC = () => {
     return raw ? (JSON.parse(raw) as Meeting[]) : [];
   });
 
-  // persist
+  
   useEffect(() => {
     localStorage.setItem('events', JSON.stringify(events));
   }, [events]);

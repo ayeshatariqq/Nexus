@@ -11,7 +11,6 @@ import { Meeting } from '../../types';
 import { entrepreneurs } from '../../data/users';
 import { getRequestsFromInvestor } from '../../data/collaborationRequests';
 import MeetingCalendar from '../../components/calendar/MeetingCalendar';
-// NOTE: match your folder name: 'payments'
 import WalletBalance from '../../components/payment/WalletBalance';
 import { CollaborationRequestCard } from '../../components/collaboration/CollaborationRequestCard';
 
@@ -56,7 +55,7 @@ export const InvestorDashboard: React.FC = () => {
     );
   };
 
-  // schedule meeting from accepted request (via modal)
+  
   const handleScheduleMeeting = (meeting: Meeting) => {
     setEvents(prev => [...prev, meeting]);
   };

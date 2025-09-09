@@ -11,11 +11,9 @@ export const EntrepreneursPage: React.FC = () => {
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   const [selectedFundingRange, setSelectedFundingRange] = useState<string[]>([]);
   
-  // Get unique industries and funding ranges
   const allIndustries = Array.from(new Set(entrepreneurs.map(e => e.industry)));
   const fundingRanges = ['< $500K', '$500K - $1M', '$1M - $5M', '> $5M'];
   
-  // Filter entrepreneurs based on search and filters
   const filteredEntrepreneurs = entrepreneurs.filter(entrepreneur => {
     const matchesSearch = searchQuery === '' || 
       entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

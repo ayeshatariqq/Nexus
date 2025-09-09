@@ -8,7 +8,6 @@ import Joyride, { Step } from 'react-joyride';
 export const DashboardLayout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // 👇 Guided walkthrough steps
   const steps: Step[] = [
     {
       target: '.sidebar-meetings',
